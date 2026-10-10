@@ -1,0 +1,33 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "builderlab/table",
+	"title": "BuilderLab Table",
+	"category": "builderlab",
+	"icon": "editor-table",
+	"description": "A data table with a caption and header cells. Rows on separate lines, cells separated by |.",
+	"attributes": {
+		"caption": {
+			"type": "string",
+			"default": ""
+		},
+		"data": {
+			"type": "string",
+			"default": ""
+		},
+		"headerRow": {
+			"type": "boolean",
+			"default": true
+		},
+		"rowHeaders": {
+			"type": "boolean",
+			"default": false
+		}
+	},
+	"supports": {
+		"html": false
+	},
+	"editorScript": "builderlab-editor",
+	"style": "builderlab-frontend",
+	"render": "file:./render.php"
+}

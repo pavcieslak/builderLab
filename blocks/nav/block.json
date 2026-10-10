@@ -1,0 +1,26 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "builderlab/nav",
+	"title": "BuilderLab Navigation",
+	"category": "builderlab",
+	"icon": "menu",
+	"description": "A navigation landmark. One link per line as \"Label | address\". Start a line with \"- \" for a submenu item.",
+	"attributes": {
+		"label": {
+			"type": "string",
+			"default": "Main"
+		},
+		"items": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"supports": {
+		"html": false
+	},
+	"editorScript": "builderlab-editor",
+	"style": "builderlab-frontend",
+	"render": "file:./render.php",
+	"viewScript": "builderlab-nav"
+}

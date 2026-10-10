@@ -1,0 +1,37 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "builderlab/heading",
+	"title": "BuilderLab Heading",
+	"category": "builderlab",
+	"icon": "heading",
+	"description": "A heading. The accessibility checker watches the heading order.",
+	"attributes": {
+		"content": {
+			"type": "string",
+			"default": ""
+		},
+		"level": {
+			"type": "number",
+			"default": 2
+		},
+		"fg": {
+			"type": "string",
+			"default": ""
+		},
+		"bg": {
+			"type": "string",
+			"default": ""
+		},
+		"anchor": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"supports": {
+		"html": false
+	},
+	"editorScript": "builderlab-editor",
+	"style": "builderlab-frontend",
+	"render": "file:./render.php"
+}

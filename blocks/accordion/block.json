@@ -1,0 +1,29 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "builderlab/accordion",
+	"title": "BuilderLab Accordion",
+	"category": "builderlab",
+	"icon": "list-view",
+	"description": "Sections that open and close. Uses the browser's own disclosure element, no script.",
+	"attributes": {
+		"items": {
+			"type": "array",
+			"default": []
+		},
+		"exclusive": {
+			"type": "boolean",
+			"default": false
+		},
+		"openFirst": {
+			"type": "boolean",
+			"default": false
+		}
+	},
+	"supports": {
+		"html": false
+	},
+	"editorScript": "builderlab-editor",
+	"style": "builderlab-frontend",
+	"render": "file:./render.php"
+}

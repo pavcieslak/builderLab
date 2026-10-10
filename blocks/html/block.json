@@ -1,0 +1,21 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "builderlab/html",
+	"title": "BuilderLab HTML",
+	"category": "builderlab",
+	"icon": "html",
+	"description": "Custom HTML. Scripts, styles and frames are removed.",
+	"attributes": {
+		"html": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"supports": {
+		"html": false
+	},
+	"editorScript": "builderlab-editor",
+	"style": "builderlab-frontend",
+	"render": "file:./render.php"
+}

@@ -1,0 +1,35 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "builderlab/alert",
+	"title": "BuilderLab Alert",
+	"category": "builderlab",
+	"icon": "warning",
+	"description": "A note with a visible type word, so meaning never relies on color.",
+	"attributes": {
+		"type": {
+			"type": "string",
+			"enum": [
+				"info",
+				"success",
+				"warning",
+				"error"
+			],
+			"default": "info"
+		},
+		"title": {
+			"type": "string",
+			"default": ""
+		},
+		"content": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"supports": {
+		"html": false
+	},
+	"editorScript": "builderlab-editor",
+	"style": "builderlab-frontend",
+	"render": "file:./render.php"
+}

@@ -1,0 +1,30 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "builderlab/tabs",
+	"title": "BuilderLab Tabs",
+	"category": "builderlab",
+	"icon": "index-card",
+	"description": "Content in tabs. Without scripts, every panel is shown under its heading.",
+	"attributes": {
+		"items": {
+			"type": "array",
+			"default": []
+		},
+		"label": {
+			"type": "string",
+			"default": "Tabbed content"
+		},
+		"level": {
+			"type": "number",
+			"default": 3
+		}
+	},
+	"supports": {
+		"html": false
+	},
+	"editorScript": "builderlab-editor",
+	"style": "builderlab-frontend",
+	"render": "file:./render.php",
+	"viewScript": "builderlab-tabs"
+}

@@ -1,0 +1,25 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "builderlab/breadcrumbs",
+	"title": "BuilderLab Breadcrumbs",
+	"category": "builderlab",
+	"icon": "arrow-right-alt",
+	"description": "Where this page sits in the site. Built from the page parents.",
+	"attributes": {
+		"label": {
+			"type": "string",
+			"default": "Breadcrumb"
+		},
+		"home": {
+			"type": "string",
+			"default": "Home"
+		}
+	},
+	"supports": {
+		"html": false
+	},
+	"editorScript": "builderlab-editor",
+	"style": "builderlab-frontend",
+	"render": "file:./render.php"
+}

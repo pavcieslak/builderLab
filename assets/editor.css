@@ -1,0 +1,20 @@
+/* BuilderLab editor-only styles. Not loaded on the public site. */
+.bl-a11y-flag{position:relative}
+.bl-a11y-flag--error{outline:3px solid #b42318;outline-offset:3px}
+.bl-a11y-flag--warning{outline:3px dashed #b54708;outline-offset:3px}
+.bl-a11y-flag::before{position:absolute;top:-1.4em;left:0;z-index:2;padding:0 .4em;font:600 11px/1.6 system-ui,sans-serif;color:#fff;pointer-events:none}
+.bl-a11y-flag--error::before{content:"Fix";background:#b42318}
+.bl-a11y-flag--warning::before{content:"Check";background:#8a3b00}
+.bl-image-placeholder{padding:1rem;border:1px dashed #757575}
+.bl-a11y-panel{padding:16px}
+.bl-a11y-list{margin:12px 0 0;padding:0;list-style:none}
+.bl-a11y-item{margin:0 0 12px;padding-left:10px;border-left:4px solid #b42318}
+.bl-a11y-item--warning{border-left-color:#8a3b00}
+.bl-a11y-ref{display:block;color:#4a5560;font-size:12px}
+.bl-field-label{margin:12px 0 4px;font-weight:600}
+.bl-hint{color:#4a5560;font-size:12px}
+.bl-contrast-notice{margin:12px 0}
+.bl-repeater__item{margin:0 0 16px;padding:12px;border:1px solid #949494}
+.bl-repeater__item legend{padding:0 4px;font-weight:600}
+.bl-repeater__actions{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.bl-empty{padding:12px;border:1px dashed #757575}

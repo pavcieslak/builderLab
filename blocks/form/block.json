@@ -1,0 +1,37 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "builderlab/form",
+	"title": "BuilderLab Form",
+	"category": "builderlab",
+	"icon": "feedback",
+	"description": "A basic contact form with labels, error messages and a summary of errors.",
+	"attributes": {
+		"formKey": {
+			"type": "string",
+			"default": ""
+		},
+		"fields": {
+			"type": "array",
+			"default": []
+		},
+		"submitLabel": {
+			"type": "string",
+			"default": "Send"
+		},
+		"successMessage": {
+			"type": "string",
+			"default": "Thank you. Your message was sent."
+		},
+		"recipient": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"supports": {
+		"html": false
+	},
+	"editorScript": "builderlab-editor",
+	"style": "builderlab-frontend",
+	"render": "file:./render.php"
+}

@@ -1,0 +1,67 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "builderlab/container",
+	"title": "BuilderLab Container",
+	"category": "builderlab",
+	"icon": "layout",
+	"description": "A layout container. One element in the editor is one element on the page.",
+	"attributes": {
+		"tag": {
+			"type": "string",
+			"enum": [
+				"div",
+				"section",
+				"header",
+				"footer",
+				"main",
+				"aside",
+				"nav",
+				"article"
+			],
+			"default": "div"
+		},
+		"label": {
+			"type": "string",
+			"default": ""
+		},
+		"layout": {
+			"type": "string",
+			"enum": [
+				"stack",
+				"row"
+			],
+			"default": "stack"
+		},
+		"boxed": {
+			"type": "boolean",
+			"default": false
+		},
+		"gap": {
+			"type": "number",
+			"default": 3
+		},
+		"bg": {
+			"type": "string",
+			"default": ""
+		},
+		"gapCustom": {
+			"type": "string",
+			"default": ""
+		},
+		"rowGap": {
+			"type": "string",
+			"default": ""
+		},
+		"columnGap": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"supports": {
+		"html": false
+	},
+	"editorScript": "builderlab-editor",
+	"style": "builderlab-frontend",
+	"render": "file:./render.php"
+}

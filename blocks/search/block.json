@@ -1,0 +1,29 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "builderlab/search",
+	"title": "BuilderLab Search",
+	"category": "builderlab",
+	"icon": "search",
+	"description": "A search form with a real label.",
+	"attributes": {
+		"label": {
+			"type": "string",
+			"default": "Search this site"
+		},
+		"buttonText": {
+			"type": "string",
+			"default": "Search"
+		},
+		"placeholder": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"supports": {
+		"html": false
+	},
+	"editorScript": "builderlab-editor",
+	"style": "builderlab-frontend",
+	"render": "file:./render.php"
+}

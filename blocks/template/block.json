@@ -1,0 +1,21 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "builderlab/template",
+	"title": "BuilderLab Template",
+	"category": "builderlab",
+	"icon": "admin-page",
+	"description": "Shows a reusable component template. Dynamic fields inside it use the page that shows it.",
+	"attributes": {
+		"templateId": {
+			"type": "number",
+			"default": 0
+		}
+	},
+	"supports": {
+		"html": false
+	},
+	"editorScript": "builderlab-editor",
+	"style": "builderlab-frontend",
+	"render": "file:./render.php"
+}

@@ -1,0 +1,51 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "builderlab/image",
+	"title": "BuilderLab Image",
+	"category": "builderlab",
+	"icon": "format-image",
+	"description": "An image. Needs alt text, or must be marked as decorative.",
+	"attributes": {
+		"id": {
+			"type": "number",
+			"default": 0
+		},
+		"url": {
+			"type": "string",
+			"default": ""
+		},
+		"alt": {
+			"type": "string",
+			"default": ""
+		},
+		"decorative": {
+			"type": "boolean",
+			"default": false
+		},
+		"caption": {
+			"type": "string",
+			"default": ""
+		},
+		"source": {
+			"type": "string",
+			"enum": [
+				"static",
+				"featured",
+				"field",
+				"option"
+			],
+			"default": "static"
+		},
+		"field": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"supports": {
+		"html": false
+	},
+	"editorScript": "builderlab-editor",
+	"style": "builderlab-frontend",
+	"render": "file:./render.php"
+}

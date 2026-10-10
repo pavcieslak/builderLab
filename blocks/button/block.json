@@ -1,0 +1,63 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "builderlab/button",
+	"title": "BuilderLab Button",
+	"category": "builderlab",
+	"icon": "button",
+	"description": "A link or a real button. At least 44 by 44 pixels, with a visible focus ring.",
+	"attributes": {
+		"content": {
+			"type": "string",
+			"default": ""
+		},
+		"kind": {
+			"type": "string",
+			"enum": [
+				"link",
+				"button"
+			],
+			"default": "link"
+		},
+		"url": {
+			"type": "string",
+			"default": ""
+		},
+		"newTab": {
+			"type": "boolean",
+			"default": false
+		},
+		"variant": {
+			"type": "string",
+			"enum": [
+				"solid",
+				"outline",
+				"ghost"
+			],
+			"default": "solid"
+		},
+		"fg": {
+			"type": "string",
+			"default": ""
+		},
+		"bg": {
+			"type": "string",
+			"default": ""
+		},
+		"size": {
+			"type": "string",
+			"enum": [
+				"sm",
+				"md",
+				"lg"
+			],
+			"default": "md"
+		}
+	},
+	"supports": {
+		"html": false
+	},
+	"editorScript": "builderlab-editor",
+	"style": "builderlab-frontend",
+	"render": "file:./render.php"
+}

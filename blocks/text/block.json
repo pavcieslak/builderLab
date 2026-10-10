@@ -1,0 +1,18 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "builderlab/text",
+	"title": "BuilderLab Text",
+	"category": "builderlab",
+	"icon": "editor-paragraph",
+	"description": "A paragraph of text with a built-in contrast readout.",
+	"attributes": {
+		"content": { "type": "string", "default": "" },
+		"fg": { "type": "string", "default": "" },
+		"bg": { "type": "string", "default": "" }
+	},
+	"supports": { "html": false },
+	"editorScript": "builderlab-editor",
+	"style": "builderlab-frontend",
+	"render": "file:./render.php"
+}

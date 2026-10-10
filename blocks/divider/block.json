@@ -1,0 +1,16 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "builderlab/divider",
+	"title": "BuilderLab Divider",
+	"category": "builderlab",
+	"icon": "minus",
+	"description": "A thematic break between sections. Decorative only.",
+	"attributes": {},
+	"supports": {
+		"html": false
+	},
+	"editorScript": "builderlab-editor",
+	"style": "builderlab-frontend",
+	"render": "file:./render.php"
+}

@@ -1,0 +1,25 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "builderlab/list",
+	"title": "BuilderLab List",
+	"category": "builderlab",
+	"icon": "editor-ul",
+	"description": "A bulleted or numbered list. One item per line.",
+	"attributes": {
+		"items": {
+			"type": "string",
+			"default": ""
+		},
+		"ordered": {
+			"type": "boolean",
+			"default": false
+		}
+	},
+	"supports": {
+		"html": false
+	},
+	"editorScript": "builderlab-editor",
+	"style": "builderlab-frontend",
+	"render": "file:./render.php"
+}
