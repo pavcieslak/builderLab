@@ -16,12 +16,13 @@ function builderlab_layout_enums() {
 		'wrap'      => array( 'wrap' => 'wrap', 'nowrap' => 'nowrap' ),
 		'alignSelf' => array( 'start' => 'start', 'center' => 'center', 'end' => 'end', 'stretch' => 'stretch' ),
 		'flexSize'  => array( 'grow' => 'grow', 'shrink' => 'shrink' ),
+		'textAlign' => array( 'left' => 'left', 'center' => 'center', 'right' => 'right', 'justify' => 'justify' ),
 	);
 }
 
 /** Class prefix per setting. */
 function builderlab_layout_prefixes() {
-	return array( 'direction' => 'bl-d-', 'justify' => 'bl-j-', 'align' => 'bl-a-', 'wrap' => 'bl-wr-', 'alignSelf' => 'bl-as-', 'flexSize' => 'bl-fs-' );
+	return array( 'direction' => 'bl-d-', 'justify' => 'bl-j-', 'align' => 'bl-a-', 'wrap' => 'bl-wr-', 'alignSelf' => 'bl-as-', 'flexSize' => 'bl-fs-', 'textAlign' => 'bl-ta-' );
 }
 
 /** Attributes shared by all BuilderLab blocks, and four more for containers. Each one holds a value per device. */
@@ -29,13 +30,14 @@ add_filter( 'register_block_type_args', function ( $args, $name ) {
 	if ( 0 !== strpos( $name, 'builderlab/' ) ) {
 		return $args;
 	}
-	$keys = array( 'width', 'hide', 'alignSelf', 'order', 'flexSize', 'padding', 'margin' );
+	$keys = array( 'width', 'hide', 'alignSelf', 'order', 'flexSize', 'padding', 'margin', 'fontSize', 'lineHeight', 'textAlign' );
 	if ( 'builderlab/container' === $name ) {
 		$keys = array_merge( $keys, array( 'direction', 'justify', 'align', 'wrap' ) );
 	}
 	foreach ( $keys as $key ) {
 		$args['attributes'][ $key ] = array( 'type' => 'object', 'default' => array() );
 	}
+	$args['attributes']['customCss'] = array( 'type' => 'string', 'default' => '' );
 	return $args;
 }, 10, 2 );
 
@@ -80,6 +82,25 @@ function builderlab_clean_layout_attr( $key, $value ) {
 			continue;
 		}
 		$v = $value[ $device ];
+		if ( 'fontSize' === $key ) {
+			$len = builderlab_spacing_value( $v, false );
+			if ( '' !== $len && 'auto' !== $len && 0.0 !== (float) $len ) {
+				$out[ $device ] = $len;
+			}
+			continue;
+		}
+		if ( 'lineHeight' === $key ) {
+			$raw = is_scalar( $v ) ? trim( (string) $v ) : '';
+			if ( '' !== $raw && is_numeric( $raw ) && $raw >= 0.8 && $raw <= 4 ) {
+				$out[ $device ] = (string) ( $raw + 0 );
+			} else {
+				$len = builderlab_spacing_value( $raw, false );
+				if ( '' !== $len && 'auto' !== $len && 0.0 !== (float) $len ) {
+					$out[ $device ] = $len;
+				}
+			}
+			continue;
+		}
 		if ( 'padding' === $key || 'margin' === $key ) {
 			if ( ! is_array( $v ) ) {
 				continue;
@@ -155,6 +176,17 @@ add_filter( 'render_block', function ( $content, $parsed ) {
 		if ( isset( $order[ $device ] ) ) {
 			$vars[]    = '--bl-o' . $suffix . ':' . (int) $order[ $device ];
 			$classes[] = 'bl-o' . $suffix;
+		}
+	}
+
+	// Font size and line height.
+	foreach ( array( 'fontSize' => array( 'bl-fz', '--bl-fz' ), 'lineHeight' => array( 'bl-lh', '--bl-lh' ) ) as $key => $names ) {
+		$clean = builderlab_clean_layout_attr( $key, $attrs[ $key ] ?? array() );
+		foreach ( $suffixes as $device => $suffix ) {
+			if ( isset( $clean[ $device ] ) ) {
+				$vars[]    = $names[1] . $suffix . ':' . $clean[ $device ];
+				$classes[] = $names[0] . $suffix;
+			}
 		}
 	}
 

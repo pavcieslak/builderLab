@@ -1,0 +1,38 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "builderlab/loop",
+	"title": "BuilderLab Loop Grid",
+	"category": "builderlab",
+	"icon": "grid-view",
+	"description": "A grid of posts, pages or custom post types. You choose what is listed and which fields each card shows.",
+	"attributes": {
+		"postType": { "type": "string", "default": "post" },
+		"taxonomy": { "type": "string", "default": "" },
+		"terms": { "type": "string", "default": "" },
+		"perPage": { "type": "number", "default": 6 },
+		"orderBy": { "type": "string", "enum": [ "date", "title", "modified", "menu_order" ], "default": "date" },
+		"order": { "type": "string", "enum": [ "DESC", "ASC" ], "default": "DESC" },
+		"columns": { "type": "number", "default": 3 },
+		"columnsTablet": { "type": "number", "default": 2 },
+		"columnsMobile": { "type": "number", "default": 1 },
+		"pagination": { "type": "string", "enum": [ "none", "numbered", "prevnext" ], "default": "numbered" },
+		"label": { "type": "string", "default": "" },
+		"headingLevel": { "type": "number", "default": 3 },
+		"empty": { "type": "string", "default": "Nothing to show yet." },
+		"loopKey": { "type": "string", "default": "" },
+		"ajax": { "type": "boolean", "default": false },
+		"card": {
+			"type": "array",
+			"default": [
+				{ "field": "image", "link": true, "text": "" },
+				{ "field": "title", "link": true, "text": "" },
+				{ "field": "excerpt", "link": false, "text": "" }
+			]
+		}
+	},
+	"supports": { "html": false },
+	"editorScript": "builderlab-editor",
+	"style": "builderlab-frontend",
+	"render": "file:./render.php"
+}

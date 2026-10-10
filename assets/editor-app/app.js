@@ -217,6 +217,12 @@
 				case 'builderlab/nav':
 					if ( ! plain( a.label ) ) { add( 'error', '4.1.2', 'The navigation has no name. Name it so people can tell navigations apart.' ); }
 					break;
+				case 'builderlab/loop': {
+					const card = Array.isArray( a.card ) ? a.card : [ { field: 'title' } ];
+					if ( ! card.length ) { add( 'warning', '1.3.1', 'The card has no fields, so the list shows nothing.' ); }
+					else if ( ! card.some( ( x ) => x.field === 'title' ) && card.some( ( x ) => x.link ) ) { add( 'warning', '2.4.4', 'The cards have links but no title field. Add the title so each link has a name.' ); }
+					break;
+				}
 				case 'builderlab/search':
 					if ( ! plain( a.label ) ) { add( 'error', '3.3.2', 'The search field has no label. It will not be shown on the page.' ); }
 					break;
@@ -245,6 +251,16 @@
 						if ( r < need ) { add( 'error', '1.4.3', `Contrast ${ r.toFixed( 2 ) }:1 is below the ${ need }:1 needed for AA.` ); }
 					}
 				}
+			}
+			// Text smaller than 12px is hard to read and hard to resize cleanly.
+			if ( a.fontSize ) {
+				const small = Object.keys( a.fontSize ).filter( ( dv ) => {
+					const m = /^(\d*\.?\d+)(px|rem|em)$/i.exec( String( a.fontSize[ dv ] ) );
+					if ( ! m ) { return false; }
+					const px = m[ 2 ].toLowerCase() === 'px' ? parseFloat( m[ 1 ] ) : parseFloat( m[ 1 ] ) * 16;
+					return px < 12;
+				} );
+				if ( small.length ) { add( 'warning', '1.4.4', 'Text smaller than 12 pixels on ' + small.join( ' and ' ) + ' is hard to read. Use at least 12px, and 16px for body text where you can.' ); }
 			}
 			if ( n.children && n.children.length ) { walk( n.children ); }
 		} );
@@ -332,6 +348,63 @@
 				if ( tt === '' || ( allowAuto && tt === 'auto' ) || parseSize( tt ).n !== '' ) { onChange( tt ); }
 			} } );
 	}
+
+	/** Keeps only simple inline formatting from typed or pasted text. */
+	function cleanInline( html ) {
+		const allowed = { B: 1, STRONG: 1, I: 1, EM: 1, A: 1, CODE: 1, KBD: 1, MARK: 1, SMALL: 1, SUB: 1, SUP: 1, BR: 1, ABBR: 1, Q: 1, CITE: 1 };
+		const tpl = document.createElement( 'template' );
+		tpl.innerHTML = html;
+		const walk = ( parent ) => {
+			Array.from( parent.childNodes ).forEach( ( n ) => {
+				if ( n.nodeType === 1 ) {
+					walk( n );
+					if ( ! allowed[ n.tagName ] ) {
+						const isBlock = /^(DIV|P|LI)$/.test( n.tagName );
+						while ( n.firstChild ) { parent.insertBefore( n.firstChild, n ); }
+						if ( isBlock && n.nextSibling ) { parent.insertBefore( document.createElement( 'br' ), n ); }
+						parent.removeChild( n );
+					} else {
+						Array.from( n.attributes ).forEach( ( a ) => {
+							const keep = ( n.tagName === 'A' && a.name === 'href' ) || ( n.tagName === 'ABBR' && a.name === 'title' );
+							if ( ! keep ) { n.removeAttribute( a.name ); }
+						} );
+						if ( n.tagName === 'A' && /^\s*javascript:/i.test( n.getAttribute( 'href' ) || '' ) ) { n.removeAttribute( 'href' ); }
+					}
+				}
+			} );
+		};
+		walk( tpl.content );
+		let out = tpl.innerHTML.replace( /(<br>\s*)+$/i, '' );
+		out = out.replace( /&nbsp;/g, ' ' );
+		return out;
+	}
+	const EDITABLE = {
+		'builderlab/heading': { key: 'content', rich: true, single: true },
+		'builderlab/text': { key: 'content', rich: true },
+		'builderlab/button': { key: 'content', rich: false, single: true },
+		'builderlab/quote': { key: 'content', rich: true, selector: '.bl-quote__text p' },
+	};
+	const escapeHtml = ( t ) => String( t ).replace( /&/g, '&amp;' ).replace( /</g, '&lt;' ).replace( />/g, '&gt;' );
+
+	/** Typography for text elements: font size, line height and alignment, each per device. */
+	function TypographyFields( { attrs, set, device, align } ) {
+		const idSize = useUid();
+		const idLine = useUid();
+		const size = attrs.fontSize || {};
+		const line = attrs.lineHeight || {};
+		const sizeNow = size[ device.id ] || '';
+		const inheritedSize = device.id === 'tablet' ? size.desktop : device.id === 'mobile' ? size.tablet || size.desktop : '';
+		const wr = ( obj, k ) => ( v ) => { const n = Object.assign( {}, obj ); if ( v ) { n[ device.id ] = v; } else { delete n[ device.id ]; } set( k, n ); };
+		return h( Fragment, null,
+			! align && h( Fragment, null,
+				h( SizeInput, { key: 'fz' + device.id, label: 'Font size on ' + device.label.toLowerCase(), value: sizeNow, onChange: wr( size, 'fontSize' ), help: inheritedSize && ! sizeNow ? 'Follows the larger device: ' + inheritedSize + '.' : 'Empty keeps the design system size. Keep body text at 16px (1rem) or more where you can.' } ),
+				h( 'div', { className: 'blf' },
+					h( 'label', { htmlFor: idLine }, h( 'span', { className: 'dashicons ' + device.icon, 'aria-hidden': 'true' } ), ' Line height on ' + device.label.toLowerCase() ),
+					h( 'input', { id: idLine, type: 'text', inputMode: 'decimal', value: line[ device.id ] || '', placeholder: 'For example 1.5', onChange: ( e ) => wr( line, 'lineHeight' )( e.target.value.trim() ) } ),
+					h( 'p', { className: 'blf-help' }, 'A number such as 1.5, or a size such as 24px. At least 1.5 is recommended for body text.' ) ) ),
+			h( DeviceChoice, { label: 'Text align', keyName: 'textAlign', value: attrs.textAlign, device, set, options: [ [ 'left', 'Left' ], [ 'center', 'Center' ], [ 'right', 'Right' ], [ 'justify', 'Justify' ] ], hint: 'Follows the theme.' } ) );
+	}
+	const TEXT_BLOCKS = [ 'builderlab/heading', 'builderlab/text', 'builderlab/button', 'builderlab/list', 'builderlab/quote', 'builderlab/alert' ];
 
 	/** Margin or padding: four sides, one unit, a link toggle, a value per device. */
 	function SpacingField( { label, keyName, value, device, set, margin } ) {
@@ -427,6 +500,99 @@
 					'The field may hold an image ID, an image address or an ACF image array.' ) ) );
 	}
 
+	/** Post types, terms and fields for the loop grid. Reloads when the post type changes. */
+	function useLoopData( postType ) {
+		const [ data, setData ] = useState( null );
+		useEffect( () => {
+			let live = true;
+			apiFetch( { path: API + '/loop-sources?post_type=' + encodeURIComponent( postType || 'post' ) } )
+				.then( ( r ) => live && setData( r ) )
+				.catch( () => live && setData( { postTypes: [], taxonomies: [], terms: {}, fields: { core: [], acf: [], meta: [] }, acfActive: false } ) );
+			return () => { live = false; };
+		}, [ postType ] );
+		return data;
+	}
+
+	/** Menus made in WordPress, for the navigation element. */
+	function MenuSourceField( { attrs, set } ) {
+		const id = useUid();
+		const [ menus, setMenus ] = useState( null );
+		useEffect( () => {
+			let live = true;
+			apiFetch( { path: API + '/menus' } ).then( ( r ) => live && setMenus( r ) ).catch( () => live && setMenus( { menus: [], navigations: [] } ) );
+			return () => { live = false; };
+		}, [] );
+		const value = attrs.menu || '';
+		const known = menus && menus.menus.concat( menus.navigations ).some( ( m ) => m.value === value );
+		const count = menus ? menus.menus.length + menus.navigations.length : 0;
+		return h( 'div', { className: 'blf' },
+			h( 'label', { htmlFor: id }, 'Menu' ),
+			h( 'select', { id, value, 'aria-describedby': id + '-h', onChange: ( e ) => set( 'menu', e.target.value ) },
+				h( 'option', { value: '' }, 'Custom links (written here)' ),
+				menus && menus.menus.length > 0 && h( 'optgroup', { label: 'WordPress menus' }, menus.menus.map( ( m ) => h( 'option', { key: m.value, value: m.value }, m.label ) ) ),
+				menus && menus.navigations.length > 0 && h( 'optgroup', { label: 'Navigation of the block theme' }, menus.navigations.map( ( m ) => h( 'option', { key: m.value, value: m.value }, m.label ) ) ),
+				menus && value && ! known && h( 'option', { value }, 'Menu not found (' + value + ')' ) ),
+			h( 'p', { id: id + '-h', className: 'blf-help' },
+				! menus ? 'Loading menus…' : count ? 'Pick a menu made in WordPress, or write your own links. Changes to the menu show up here and on the site. One level of submenu is shown.' : 'No menus were found in WordPress yet. Create one under Appearance, Menus, or write your own links.' ) );
+	}
+
+	/** What the loop lists: post type, and optionally one taxonomy with chosen terms. */
+	function LoopSourceField( { attrs, set } ) {
+		const id = useUid();
+		const type = attrs.postType || 'post';
+		const data = useLoopData( type );
+		const taxes = data ? data.taxonomies : [];
+		const terms = data && attrs.taxonomy ? ( data.terms[ attrs.taxonomy ] || [] ) : [];
+		return h( Fragment, null,
+			h( 'div', { className: 'blf' },
+				h( 'label', { htmlFor: id }, 'What to list' ),
+				h( 'select', { id, value: type, onChange: ( e ) => set( { postType: e.target.value, taxonomy: '', terms: '' } ) },
+					( data && data.postTypes.length ? data.postTypes : [ { name: type, label: type } ] ).map( ( p ) => h( 'option', { key: p.name, value: p.name }, p.label ) ) ),
+				h( 'p', { className: 'blf-help' }, 'Posts, pages or any public custom post type. The page that shows the list is never part of it.' ) ),
+			taxes.length > 0 && h( 'div', { className: 'blf' },
+				h( 'label', { htmlFor: id + '-t' }, 'Only items in' ),
+				h( 'select', { id: id + '-t', value: attrs.taxonomy || '', onChange: ( e ) => set( { taxonomy: e.target.value, terms: '' } ) },
+					h( 'option', { value: '' }, 'Everything' ),
+					taxes.map( ( t ) => h( 'option', { key: t.name, value: t.name }, t.label ) ) ) ),
+			attrs.taxonomy && h( 'div', { className: 'blf' },
+				h( 'label', { htmlFor: id + '-s' }, 'Terms (slugs, separated by commas)' ),
+				h( 'input', { id: id + '-s', type: 'text', list: id + '-sl', value: attrs.terms || '', placeholder: 'news, events', onChange: ( e ) => set( 'terms', e.target.value ) } ),
+				h( 'datalist', { id: id + '-sl' }, terms.map( ( t ) => h( 'option', { key: t.slug, value: t.slug }, t.name ) ) ),
+				h( 'p', { className: 'blf-help' }, 'Leave empty to show every term.' ) ) );
+	}
+
+	/** The card creator: an ordered list of fields. Lists built-in fields, ACF fields and custom fields. */
+	function LoopCardField( { attrs, set, roles } ) {
+		const data = useLoopData( attrs.postType || 'post' );
+		const list = Array.isArray( attrs.card ) ? attrs.card : [];
+		const options = [];
+		if ( data ) {
+			data.fields.core.forEach( ( f ) => options.push( { value: f.value, label: f.label } ) );
+			data.fields.acf.forEach( ( f ) => options.push( { value: f.value, label: 'ACF: ' + f.label + ' (' + f.group + ')' } ) );
+			data.fields.meta.forEach( ( f ) => options.push( { value: f.value, label: 'Custom field: ' + f.label } ) );
+		}
+		list.forEach( ( it ) => { if ( it.field && ! options.some( ( o ) => o.value === it.field ) ) { options.push( { value: it.field, label: it.field } ); } } );
+		const field = { key: 'card', label: 'Card contents, top to bottom', type: 'items', itemLabel: 'Field', blank: { field: 'title', link: false, text: '' },
+			fields: [
+				{ key: 'field', label: 'Field', type: 'select', options },
+				{ key: 'link', label: 'Link to the item', type: 'toggle' },
+				{ key: 'text', label: 'Label or button text', type: 'text', help: 'Read more: the link text. Author and custom fields: a label shown before the value.' },
+			] };
+		return h( Fragment, null,
+			h( Control, { field, attrs, set, roles } ),
+			data && ! data.acfActive && h( 'p', { className: 'blf-help' }, 'ACF is not active, so only built-in and plain custom fields are listed.' ) );
+	}
+
+	/** Custom CSS for one element. "this" is the element itself. */
+	function CustomCssField( { value, onChange } ) {
+		const id = useUid();
+		return h( 'div', { className: 'blf' },
+			h( 'label', { htmlFor: id }, 'Custom CSS' ),
+			h( 'textarea', { id, className: 'blf-code', rows: 8, spellCheck: false, autoCapitalize: 'off', autoComplete: 'off', value, 'aria-describedby': id + '-h',
+				placeholder: 'this {\n  color: #b00020;\n}\nthis:hover {\n  opacity: .8;\n}', onChange: ( e ) => onChange( e.target.value ) } ),
+			h( 'p', { id: id + '-h', className: 'blf-help' }, 'Write ', h( 'code', null, 'this' ), ' to point at this element. For example ', h( 'code', null, 'this:hover { color: red; }' ), ' or ', h( 'code', null, 'this p { margin: 0; }' ), '. Only this element is changed.' ) );
+	}
+
 	/* ---------- property forms ---------- */
 
 	const T = ( key, label, help ) => ( { key, label, help, type: 'text' } );
@@ -459,8 +625,19 @@
 		'builderlab/accordion': [ L( 'items', 'Items', [ T( 'title', 'Title' ), A( 'content', 'Content', 'A blank line starts a new paragraph.', 3 ) ], { title: '', content: '' }, 'Item' ), B( 'exclusive', 'Only one open at a time' ), B( 'openFirst', 'First item open' ) ],
 		'builderlab/tabs': [ T( 'label', 'Name of the tab group', 'Read out by screen readers.' ), S( 'level', 'Heading level of tab titles', [ 2, 3, 4, 5, 6 ].map( ( n ) => ( { label: 'H' + n, value: String( n ) } ) ) ),
 			L( 'items', 'Tabs', [ T( 'title', 'Title' ), A( 'content', 'Content', '', 3 ) ], { title: '', content: '' }, 'Tab' ) ],
-		'builderlab/nav': [ T( 'label', 'Name of this navigation (required)' ), A( 'items', 'Links', 'One link per line: Label | address. Start a line with "- " for a submenu item.', 8 ) ],
+		'builderlab/nav': [ T( 'label', 'Name of this navigation (required)' ), { key: 'menu', label: 'Menu', type: 'menusource' },
+			Object.assign( A( 'items', 'Links', 'One link per line: Label | address. Start a line with "- " for a submenu item.', 8 ), { showIf: ( a ) => ! a.menu } ) ],
 		'builderlab/template': [ { key: 'templateId', label: 'Component', type: 'template' } ],
+		'builderlab/loop': [ { key: 'postType', label: 'What to list', type: 'loopsource' },
+			S( 'orderBy', 'Order by', [ { label: 'Date published', value: 'date' }, { label: 'Title', value: 'title' }, { label: 'Date modified', value: 'modified' }, { label: 'Menu order', value: 'menu_order' } ] ),
+			S( 'order', 'Direction', [ { label: 'Newest or Z to A first', value: 'DESC' }, { label: 'Oldest or A to Z first', value: 'ASC' } ] ),
+			S( 'perPage', 'Items per page', opts( [ 1, 2, 3, 4, 6, 8, 9, 12, 16, 24 ] ) ),
+			S( 'columns', 'Columns on desktop', opts( [ 1, 2, 3, 4, 5, 6 ] ) ), S( 'columnsTablet', 'Columns on tablet', opts( [ 1, 2, 3, 4, 5, 6 ] ) ), S( 'columnsMobile', 'Columns on mobile', opts( [ 1, 2, 3, 4 ] ) ),
+			S( 'pagination', 'Pagination', [ { label: 'Numbered pages', value: 'numbered' }, { label: 'Previous and next only', value: 'prevnext' }, { label: 'None (first items only)', value: 'none' } ] ),
+			B( 'ajax', 'Load pages without reloading (AJAX)', 'The page stays where it is and only the list changes. Without scripts the links still work as normal links.' ),
+			T( 'label', 'Name of the list (optional)', 'Read out by screen readers as a region name.' ),
+			S( 'headingLevel', 'Heading level of card titles', [ 2, 3, 4, 5, 6 ].map( ( n ) => ( { label: 'H' + n, value: String( n ) } ) ) ),
+			{ key: 'card', label: 'Card contents', type: 'loopcard' }, T( 'empty', 'Message when nothing is found' ) ],
 		'builderlab/breadcrumbs': [ T( 'label', 'Name of the landmark' ), T( 'home', 'Label of the first link' ) ],
 		'builderlab/search': [ T( 'label', 'Label (required)' ), T( 'buttonText', 'Button text' ), T( 'placeholder', 'Example text (optional)' ) ],
 		'builderlab/form': [ L( 'fields', 'Form fields', [ S( 'type', 'Type', opts( [ 'text', 'email', 'tel', 'textarea', 'select', 'checkbox', 'radio' ] ) ), T( 'label', 'Label (required)' ), B( 'required', 'Required' ),
@@ -487,6 +664,7 @@
 			if ( d !== null && d !== undefined && d !== '' && ! ( Array.isArray( d ) && ! d.length ) ) { attrs[ k ] = d; }
 		} );
 		Object.assign( attrs, clone( FIRST_CONTENT[ blockDef.name ] || {} ) );
+		if ( blockDef.name === 'builderlab/loop' ) { attrs.loopKey = 'l' + Math.random().toString( 36 ).slice( 2, 8 ); }
 		if ( blockDef.name === 'builderlab/form' ) { attrs.formKey = 'f' + Math.random().toString( 36 ).slice( 2, 10 ); }
 		return { id: newId(), name: blockDef.name, attrs, children: [] };
 	}
@@ -521,6 +699,9 @@
 				h( 'p', { id: id + '-h', className: 'blf-help' }, COMPONENTS.length ? 'Fields inside the component, such as dynamic images, use the page that shows it. Only published components are shown on the site.' : 'There are no components yet. Add one in BuilderLab, Templates, with the type Component.' ) );
 		}
 		if ( field.type === 'imagesource' ) { return h( ImageSourceField, { attrs, set } ); }
+		if ( field.type === 'menusource' ) { return h( MenuSourceField, { attrs, set } ); }
+		if ( field.type === 'loopsource' ) { return h( LoopSourceField, { attrs, set } ); }
+		if ( field.type === 'loopcard' ) { return h( LoopCardField, { attrs, set, roles } ); }
 		if ( field.type === 'devchoice' ) {
 			return h( DeviceChoice, { label: field.label, keyName: field.key, value: v, device: field.device, set, options: field.options, hint: field.hint } );
 		}
@@ -666,6 +847,46 @@
 						: `"${ result.page }": header ${ result.header ? result.header.title : 'from the theme' }; footer ${ result.footer ? result.footer.title : 'from the theme' }.` ) ) ) );
 	}
 
+	/* ---------- resizable side panels ---------- */
+
+	const PANEL_MIN = 240;
+	const PANEL_DEFAULT = 304;
+	const panelMax = () => Math.max( PANEL_MIN, Math.floor( window.innerWidth * 0.3 ) ); // at most 30% of the window
+	const clampPanel = ( w ) => Math.max( PANEL_MIN, Math.min( panelMax(), Math.round( w ) ) );
+
+	/** A draggable edge. Also works with the arrow keys, Home, End and a double click to reset. */
+	function Resizer( { side, width, onChange, onActive, label } ) {
+		const down = ( e ) => {
+			e.preventDefault();
+			const el = e.currentTarget;
+			const startX = e.clientX;
+			const start = width;
+			el.setPointerCapture( e.pointerId );
+			onActive( true );
+			const move = ( ev ) => { const dx = ev.clientX - startX; onChange( clampPanel( side === 'left' ? start + dx : start - dx ) ); };
+			const up = () => {
+				el.removeEventListener( 'pointermove', move );
+				el.removeEventListener( 'pointerup', up );
+				el.removeEventListener( 'pointercancel', up );
+				onActive( false );
+			};
+			el.addEventListener( 'pointermove', move );
+			el.addEventListener( 'pointerup', up );
+			el.addEventListener( 'pointercancel', up );
+		};
+		const key = ( e ) => {
+			const grow = side === 'left' ? 'ArrowRight' : 'ArrowLeft';
+			const shrink = side === 'left' ? 'ArrowLeft' : 'ArrowRight';
+			if ( e.key === grow ) { e.preventDefault(); onChange( clampPanel( width + ( e.shiftKey ? 48 : 16 ) ) ); }
+			else if ( e.key === shrink ) { e.preventDefault(); onChange( clampPanel( width - ( e.shiftKey ? 48 : 16 ) ) ); }
+			else if ( e.key === 'Home' ) { e.preventDefault(); onChange( PANEL_MIN ); }
+			else if ( e.key === 'End' ) { e.preventDefault(); onChange( panelMax() ); }
+		};
+		return h( 'div', { role: 'separator', 'aria-orientation': 'vertical', tabIndex: 0, className: 'bla-resize bla-resize--' + side,
+			'aria-label': label, 'aria-valuemin': PANEL_MIN, 'aria-valuemax': panelMax(), 'aria-valuenow': width, title: 'Drag to resize. Double-click to reset.',
+			onPointerDown: down, onKeyDown: key, onDoubleClick: () => onChange( PANEL_DEFAULT ) } );
+	}
+
 	/* ---------- context menu ---------- */
 
 	function ContextMenu( { menu, groups, onPick, onClose, label } ) {
@@ -728,6 +949,13 @@
 		const [ drop, setDrop ] = useState( null );
 		const [ collapsed, setCollapsed ] = useState( {} );
 		const [ menu, setMenu ] = useState( null );
+		const [ panels, setPanels ] = useState( () => {
+			try {
+				const p = JSON.parse( window.localStorage.getItem( 'builderlabPanels' ) || '{}' );
+				return { left: clampPanel( p.left || PANEL_DEFAULT ), right: clampPanel( p.right || PANEL_DEFAULT ) };
+			} catch ( e ) { return { left: PANEL_DEFAULT, right: PANEL_DEFAULT }; }
+		} );
+		const [ resizing, setResizing ] = useState( false );
 		const [ tpl, setTpl ] = useState( null );
 		const [ savedTpl, setSavedTpl ] = useState( '' );
 		const [ clip, setClip ] = useState( null );
@@ -778,6 +1006,69 @@
 		const undo = () => setDoc( ( d ) => ( d.past.length ? { tree: d.past[ d.past.length - 1 ], past: d.past.slice( 0, -1 ), future: [ d.tree ].concat( d.future ) } : d ) );
 		const redo = () => setDoc( ( d ) => ( d.future.length ? { tree: d.future[ 0 ], past: d.past.concat( [ d.tree ] ), future: d.future.slice( 1 ) } : d ) );
 		const say = ( t ) => setAnnounce( t );
+		const editing = useRef( false );
+
+		/** Edit text directly on the page (double-click, or the button in the properties). */
+		const startEdit = ( id ) => {
+			const f2 = frame.current;
+			const d = f2 && f2.contentDocument;
+			const node = find( doc.tree, id );
+			if ( ! d || ! node || node.node.opaque || editing.current ) { return; }
+			const c = EDITABLE[ node.node.name ];
+			const host = d.querySelector( '[data-bl-id="' + id + '"]' );
+			if ( ! c || ! host ) { return; }
+			const el = c.selector ? host.querySelector( c.selector ) : host;
+			if ( ! el ) { return; }
+			const original = ( node.node.attrs || {} )[ c.key ] || '';
+			editing.current = true;
+			el.innerHTML = c.rich ? original : escapeHtml( original );
+			el.setAttribute( 'contenteditable', 'true' );
+			el.setAttribute( 'spellcheck', 'true' );
+			el.style.outline = '2px solid #000';
+			el.style.outlineOffset = '2px';
+			el.style.cursor = 'text';
+			el.focus();
+			const sel = d.defaultView.getSelection();
+			const range = d.createRange();
+			range.selectNodeContents( el );
+			range.collapse( false );
+			sel.removeAllRanges();
+			sel.addRange( range );
+			say( 'Editing text on the page. Press Escape or click outside to finish.' );
+			let done = false;
+			const finish = () => {
+				if ( done ) { return; }
+				done = true;
+				el.removeEventListener( 'keydown', onKey );
+				el.removeEventListener( 'blur', finish );
+				el.removeEventListener( 'paste', onPaste );
+				el.removeAttribute( 'contenteditable' );
+				const next = c.rich ? cleanInline( el.innerHTML ) : el.textContent.replace( /\s+/g, ' ' ).trim();
+				editing.current = false;
+				if ( next !== original ) {
+					commit( ( t ) => mapNodes( t, ( n ) => ( n.id === id ? Object.assign( {}, n, { attrs: Object.assign( {}, n.attrs, { [ c.key ]: next } ) } ) : n ) ), id + ':' + c.key );
+					say( 'Text updated.' );
+				} else {
+					setHtml( ( h2 ) => ( h2 === null ? h2 : h2 + ' ' ) ); // put the rendered version back
+				}
+			};
+			const onKey = ( e ) => {
+				if ( e.key === 'Escape' ) { e.preventDefault(); finish(); return; }
+				if ( e.key === 'Enter' ) {
+					e.preventDefault();
+					if ( c.single ) { finish(); } else { d.execCommand( 'insertLineBreak' ); }
+					return;
+				}
+				if ( c.rich && ( e.ctrlKey || e.metaKey ) && ! e.shiftKey ) {
+					if ( e.key.toLowerCase() === 'b' ) { e.preventDefault(); d.execCommand( 'bold' ); }
+					if ( e.key.toLowerCase() === 'i' ) { e.preventDefault(); d.execCommand( 'italic' ); }
+				}
+			};
+			const onPaste = ( e ) => { e.preventDefault(); const t = ( e.clipboardData || window.clipboardData ).getData( 'text/plain' ).replace( /\r?\n/g, c.single ? ' ' : '\n' ); d.execCommand( 'insertText', false, t ); };
+			el.addEventListener( 'keydown', onKey );
+			el.addEventListener( 'blur', finish );
+			el.addEventListener( 'paste', onPaste );
+		};
 
 		useEffect( () => {
 			if ( ! sel ) { return; }
@@ -792,6 +1083,14 @@
 		useEffect( () => {
 			try { window.localStorage.setItem( 'builderlabTheme', theme ); } catch ( e ) { /* storage may be blocked */ }
 		}, [ theme ] );
+		useEffect( () => {
+			try { window.localStorage.setItem( 'builderlabPanels', JSON.stringify( panels ) ); } catch ( e ) { /* storage may be blocked */ }
+		}, [ panels ] );
+		useEffect( () => {
+			const onResize = () => setPanels( ( p ) => ( { left: clampPanel( p.left ), right: clampPanel( p.right ) } ) );
+			window.addEventListener( 'resize', onResize );
+			return () => window.removeEventListener( 'resize', onResize );
+		}, [] );
 
 		// Canvas: render on the server, then write into the frame.
 		useEffect( () => {
@@ -830,6 +1129,7 @@
 			setSel: ( id ) => { setSel( id ); setLeftTab( 'properties' ); },
 			openMenu: ( id, x, y, returnTo ) => { setSel( id ); setMenu( { id, x, y, returnTo: returnTo || null } ); },
 			closeMenu: () => setMenu( null ),
+			startEdit,
 		};
 
 		useEffect( () => {
@@ -837,7 +1137,7 @@
 			const d = f && f.contentDocument;
 			if ( ! d || ! d.body || html === null ) { return; }
 			const root = d.querySelector( '[data-bl-root]' ) || d.getElementById( 'bl-canvas' );
-			if ( ! root ) { return; }
+			if ( ! root || editing.current ) { return; }
 			d.body.classList.add( 'bl-editing' );
 			if ( ! d.getElementById( 'bl-edit-css' ) ) {
 				const st = d.createElement( 'style' );
@@ -852,11 +1152,24 @@
 				const target = ( e ) => ( e.target.closest ? e.target.closest( '[data-bl-id]' ) : null );
 				d.addEventListener( 'click', ( e ) => {
 					const el = target( e );
-					if ( el ) { e.preventDefault(); api.current.setSel( el.getAttribute( 'data-bl-id' ) ); }
+					if ( e.target.closest && e.target.closest( '[contenteditable="true"]' ) ) { return; }
+					if ( el ) {
+						e.preventDefault();
+						const id2 = el.getAttribute( 'data-bl-id' );
+						const now = Date.now();
+						const last = d.__blLastClick || { id: '', t: 0 };
+						d.__blLastClick = { id: id2, t: now };
+						if ( last.id === id2 && now - last.t < 450 ) { d.__blLastClick = { id: '', t: 0 }; api.current.startEdit( id2 ); return; }
+						api.current.setSel( id2 );
+					}
 					else if ( e.target.closest && e.target.closest( 'a[href]' ) ) { e.preventDefault(); }
 				} );
 				d.addEventListener( 'submit', ( e ) => e.preventDefault() );
 				d.addEventListener( 'mousedown', () => api.current.closeMenu() );
+				d.addEventListener( 'dblclick', ( e ) => {
+					const el = target( e );
+					if ( el ) { e.preventDefault(); api.current.startEdit( el.getAttribute( 'data-bl-id' ) ); }
+				} );
 				d.addEventListener( 'contextmenu', ( e ) => {
 					const el = target( e );
 					if ( ! el ) { return; }
@@ -898,6 +1211,16 @@
 			Object.keys( sev ).forEach( ( id ) => { const el = d.querySelector( '[data-bl-id="' + id + '"]' ); el && el.classList.add( 'bl-flag-' + sev[ id ] ); } );
 			if ( sel ) { const el = d.querySelector( '[data-bl-id="' + sel + '"]' ); el && el.classList.add( 'bl-sel' ); }
 		}, [ sel, html, issues, frameTick ] );
+
+		// Scroll the preview to an element, so a flagged problem is visible on the page.
+		const revealInPreview = ( id ) => {
+			const f = frame.current;
+			const d = f && f.contentDocument;
+			const el = d && d.querySelector( '[data-bl-id="' + id + '"]' );
+			if ( ! el ) { return; }
+			const calm = window.matchMedia && window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches;
+			el.scrollIntoView( { block: 'center', inline: 'nearest', behavior: calm ? 'auto' : 'smooth' } );
+		};
 
 		const addBlock = ( def ) => {
 			const node = makeNode( def );
@@ -1065,7 +1388,7 @@
 				h( 'button', { key: a[ 0 ], type: 'button', className: 'blb' + ( a[ 0 ] === 'delete' ? ' blb-danger' : '' ), disabled: [ 'up', 'down', 'out', 'in' ].includes( a[ 0 ] ) && ! canMove( tree, selected.node.id, a[ 0 ] ), onClick: () => act( a[ 0 ] ) }, a[ 1 ] ) ) );
 
 		const allFields = selected && ! selected.node.opaque ? UI[ selected.node.name ] || [] : [];
-		const tabFields = allFields.filter( ( f ) => groupOf( f ) === propTab );
+		const tabFields = allFields.filter( ( f ) => groupOf( f ) === propTab && ( ! f.showIf || f.showIf( ( selected && selected.node.attrs ) || {} ) ) );
 		const setNode = selected ? setAttr( selected.node.id ) : null;
 
 		const iconBtn = ( icon, label, onClick, extra ) => h( 'button', Object.assign( { type: 'button', className: 'blb blb-icon', 'aria-label': label, title: label, onClick }, extra || {} ), h( 'span', { className: 'dashicons ' + icon, 'aria-hidden': 'true' } ) );
@@ -1092,15 +1415,15 @@
 			if ( back && back.focus && actionId !== 'delete' ) { setTimeout( () => back.focus(), 30 ); }
 		};
 
-		return h( 'div', { className: 'bla', 'data-theme': theme },
+		return h( 'div', { className: 'bla' + ( resizing ? ' is-resizing' : '' ), 'data-theme': theme },
 			menuNode && h( ContextMenu, { key: menu.id + ':' + menu.x + ':' + menu.y, menu, groups: menuGroups, onPick: pickMenu, onClose: closeMenu, label: 'Actions for ' + titleOf( menuNode.node ) } ),
 			h( 'header', { className: 'bla-top' },
 				h( 'a', { className: 'blb', href: data.post.listUrl }, h( 'span', { className: 'dashicons dashicons-arrow-left-alt2', 'aria-hidden': 'true' } ), 'Exit to ' + String( data.post.typePlural ).toLowerCase() ),
 				h( 'label', { className: 'bla-title' }, h( 'span', { className: 'bl-sr' }, 'Title' ), h( 'input', { type: 'text', value: title, onChange: ( e ) => setTitle( e.target.value ), placeholder: 'Title' } ) ),
 				data.layout !== '' && data.layouts && h( 'label', { className: 'bla-layout' },
 					h( 'span', { className: 'bl-sr' }, 'Page layout' ),
-					h( 'select', { value: layout || 'theme', title: 'Page layout', onChange: ( e ) => { setLayout( e.target.value ); say( 'Page layout: ' + data.layouts[ e.target.value ] ); } },
-						Object.keys( data.layouts ).map( ( k ) => h( 'option', { key: k, value: k }, data.layouts[ k ] ) ) ) ),
+					h( 'select', { value: layout || 'theme', title: ( data.layouts[ layout || 'theme' ] || '' ), onChange: ( e ) => { setLayout( e.target.value ); say( 'Page layout: ' + data.layouts[ e.target.value ] ); } },
+						Object.keys( data.layouts ).map( ( k ) => h( 'option', { key: k, value: k, title: data.layouts[ k ] }, String( data.layouts[ k ] ).split( ':' )[ 0 ] ) ) ) ),
 				h( 'div', { className: 'bla-group bla-devices', role: 'group', 'aria-label': 'Preview device' },
 					DEVICES.map( ( d ) => iconBtn( d.icon, d.label + ' preview, ' + d.note, () => { setDevice( d.id ); say( d.label + ' view. Width fields now edit the ' + d.label.toLowerCase() + ' value.' ); }, { key: d.id, 'aria-pressed': device === d.id } ) ) ),
 				h( 'div', { className: 'bla-group', role: 'group', 'aria-label': 'History' },
@@ -1118,8 +1441,9 @@
 						h( 'button', { type: 'button', className: 'blb blb-primary', disabled: saving, onClick: () => save( 'publish' ) }, 'Publish' ) ) ),
 			h( 'div', { className: 'bla-msg', role: 'status', 'aria-live': 'polite' }, msg ),
 			h( 'div', { className: 'bl-sr', role: 'status', 'aria-live': 'polite' }, announce ),
-			h( 'div', { className: 'bla-body' },
+			h( 'div', { className: 'bla-body', style: { '--bl-left': panels.left + 'px', '--bl-right': panels.right + 'px' } },
 				h( 'aside', { className: 'bla-left', 'aria-label': 'Elements and properties' },
+					h( Resizer, { side: 'left', width: panels.left, label: 'Resize the left panel', onActive: setResizing, onChange: ( w ) => setPanels( ( p ) => Object.assign( {}, p, { left: w } ) ) } ),
 					h( 'div', { className: 'bla-tabs', role: 'group', 'aria-label': 'Left panel' },
 						h( 'button', { type: 'button', className: 'blb', 'aria-pressed': leftTab === 'elements', onClick: () => setLeftTab( 'elements' ) }, 'Elements' ),
 						h( 'button', { type: 'button', className: 'blb', 'aria-pressed': leftTab === 'properties', onClick: () => setLeftTab( 'properties' ) }, 'Properties' ),
@@ -1145,10 +1469,13 @@
 										: h( Fragment, null,
 											h( 'div', { className: 'bla-ptabs', role: 'group', 'aria-label': 'Property groups' },
 												[ [ 'content', 'Content' ], [ 'style', 'Style' ], [ 'layout', 'Layout' ], [ 'advanced', 'Advanced' ] ].map( ( t ) => h( 'button', { key: t[ 0 ], type: 'button', className: 'blb', 'aria-pressed': propTab === t[ 0 ], onClick: () => setPropTab( t[ 0 ] ) }, t[ 1 ] ) ) ),
-											tabFields.length === 0 && propTab !== 'layout' && propTab !== 'advanced' ? h( 'p', null, 'Nothing to set in this group for this element.' ) : null,
+											propTab === 'content' && EDITABLE[ selected.node.name ] && h( 'button', { type: 'button', className: 'blb', style: { marginBottom: 14 }, onClick: () => startEdit( selected.node.id ) }, 'Edit text on the page' ),
+											propTab === 'style' && ( TEXT_BLOCKS.includes( selected.node.name ) || selected.node.name === 'builderlab/container' ) && h( TypographyFields, { key: 'ty' + dev.id + selected.node.id, attrs: selected.node.attrs || {}, set: setNode, device: dev, align: selected.node.name === 'builderlab/container' } ),
+											tabFields.length === 0 && propTab !== 'layout' && propTab !== 'advanced' && ! ( propTab === 'style' && ( TEXT_BLOCKS.includes( selected.node.name ) || selected.node.name === 'builderlab/container' ) ) ? h( 'p', null, 'Nothing to set in this group for this element.' ) : null,
 											propTab === 'advanced' && h( Fragment, null,
 												h( SpacingField, { key: 'm' + dev.id + selected.node.id, label: 'Margin', keyName: 'margin', value: ( selected.node.attrs || {} ).margin, device: dev, set: setNode, margin: true } ),
-												h( SpacingField, { key: 'p' + dev.id + selected.node.id, label: 'Padding', keyName: 'padding', value: ( selected.node.attrs || {} ).padding, device: dev, set: setNode } ) ),
+												h( SpacingField, { key: 'p' + dev.id + selected.node.id, label: 'Padding', keyName: 'padding', value: ( selected.node.attrs || {} ).padding, device: dev, set: setNode } ),
+												h( CustomCssField, { key: 'css' + selected.node.id, value: ( selected.node.attrs || {} ).customCss || '', onChange: ( v ) => setNode( 'customCss', v ) } ) ),
 											tabFields.map( ( f ) => h( Control, { key: selected.node.id + f.key + dev.id, field: Object.assign( {}, f, { device: dev } ), attrs: selected.node.attrs || {}, roles, set: setNode } ) ),
 											propTab === 'layout' && h( Fragment, null,
 												h( FlexItemFields, { attrs: selected.node.attrs || {}, set: setNode, device: dev } ),
@@ -1159,6 +1486,7 @@
 					h( 'div', { className: 'bla-stage' + ( rendering ? ' is-busy' : '' ) },
 						h( 'iframe', { ref: frame, src: data.previewUrl ? data.previewUrl + '&bl_layout=' + encodeURIComponent( layout || 'theme' ) : cfg.canvasUrl, className: 'bla-frame is-' + device, title: 'Page canvas: a live preview of the page. Select elements here or in the layers.', onLoad: () => setFrameTick( ( n ) => n + 1 ) } ) ) ),
 				h( 'aside', { className: 'bla-right', 'aria-label': 'Layers and accessibility' },
+					h( Resizer, { side: 'right', width: panels.right, label: 'Resize the right panel', onActive: setResizing, onChange: ( w ) => setPanels( ( p ) => Object.assign( {}, p, { right: w } ) ) } ),
 					h( 'div', { className: 'bla-tabs', role: 'group', 'aria-label': 'Right panel' },
 						h( 'button', { type: 'button', className: 'blb', 'aria-pressed': rightTab === 'layers', onClick: () => setRightTab( 'layers' ) }, 'Layers' ),
 						h( 'button', { type: 'button', className: 'blb', 'aria-pressed': rightTab === 'a11y', onClick: () => setRightTab( 'a11y' ) }, 'Accessibility' ) ),
@@ -1176,7 +1504,7 @@
 						: h( 'div', { className: 'bla-pane' },
 							h( 'p', { role: 'status' }, issues.length ? `${ errorCount } errors and ${ issues.length - errorCount } warnings. This is information only; it never stops you from saving or publishing.` : 'No automated issues found. Manual checks remain: keyboard, screen reader and zoom.' ),
 							h( 'ul', { className: 'bla-issues' }, issues.map( ( i, n ) =>
-								h( 'li', { key: n, className: 'is-' + i.severity }, h( 'button', { type: 'button', className: 'bll-main', onClick: () => { setSel( i.id ); setLeftTab( 'properties' ); } }, h( 'strong', null, ( i.severity === 'error' ? 'Fix: ' : 'Check: ' ) + i.label + '. ' ), i.message, h( 'span', { className: 'bll-prev' }, ' WCAG ' + i.wcag ) ) ) ) ) ) ) ) );
+								h( 'li', { key: n, className: 'is-' + i.severity }, h( 'button', { type: 'button', className: 'bll-main', onClick: () => { setSel( i.id ); setLeftTab( 'properties' ); revealInPreview( i.id ); say( 'Scrolled to ' + ( i.label || 'the element' ) + ' in the preview.' ); } }, h( 'strong', null, ( i.severity === 'error' ? 'Fix: ' : 'Check: ' ) + i.label + '. ' ), i.message, h( 'span', { className: 'bll-prev' }, ' WCAG ' + i.wcag ) ) ) ) ) ) ) ) );
 	}
 
 	const root = document.getElementById( 'builderlab-app' );

@@ -18,7 +18,7 @@ To make building web pages fast **and** accessible, by default:
 
 ## Features
 
-**Elements (18)** container, heading, text, button, image, list, divider, quote, table, alert, HTML, accordion, tabs, navigation, breadcrumbs, search, form, template.
+**Elements (19)** container, heading, text, button, image, list, divider, quote, table, alert, HTML, accordion, tabs, navigation, breadcrumbs, search, form, loop grid, template.
 
 **Visual editor**
 - Elements, properties (Content, Style, Layout, Advanced), live canvas and a nested layers panel with groups, expand and collapse
@@ -28,6 +28,10 @@ To make building web pages fast **and** accessible, by default:
 - Gaps and sizes in px, rem, em, %, vw and vh
 - Page layout per page: theme default, full width, or a bare canvas with no header and footer; the editor preview matches the live page
 - "Edit with BuilderLab" in the page list, the admin bar and the edit screen, for the content types you choose, including custom post types
+- Resizable side panels (up to 30% of the window), remembered between visits
+- Text editing directly on the canvas (double-click), with per-device typography
+- Custom CSS per element in the Advanced tab: write `this` to point at the element, for example `this:hover { color: red; }`
+- Clicking an accessibility issue scrolls the preview to the element
 - Dark and light editor theme
 
 **Accessibility**
@@ -39,6 +43,14 @@ To make building web pages fast **and** accessible, by default:
 - Colors, typography, spacing, shape, focus ring and target size as design tokens
 - Roles (what a color is for) and component styles (buttons, alerts, fields, tables, quotes)
 - A live style guide, a contrast matrix (warns only), revisions, import and export, and WP-CLI commands (`wp builderlab ds`)
+
+**Loop grid**
+- Lists posts, pages or any public custom post type, with an optional term filter, order and items per page
+- Columns per device, numbered or previous/next pagination, optional AJAX pagination (about 2 KB of script, loaded only when used; links still work without JavaScript)
+- A card creator: choose built-in fields, ACF fields or custom fields, in the order you want
+
+**Navigation**
+- Write your own links, or use a menu made in WordPress (classic menus and block theme navigation)
 
 **Templates**
 - Header, footer and reusable component templates
@@ -67,9 +79,9 @@ There is no build step; the plugin runs as it is.
 
 - No automated test suite yet; behavior was checked with scripted browser sessions
 - Drag and drop was verified with generated drag events; please try it with a mouse
-- Text is edited in the properties panel, not directly on the canvas
 - Breakpoints are fixed (tablet up to 1024 px, mobile up to 767 px)
-- Dynamic fields work for images only so far
+- Dynamic fields are available for images and in loop grid cards; text, links and backgrounds on a single page are not dynamic yet
+- Menu item options such as "open in a new tab" are not used by the navigation element yet
 - Automated checks find only part of the accessibility issues; keyboard, screen reader and zoom checks are still needed
 
 ## Third-party software

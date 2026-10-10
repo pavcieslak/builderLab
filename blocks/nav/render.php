@@ -3,8 +3,8 @@
 defined( 'ABSPATH' ) || exit;
 
 $label = trim( (string) ( $attributes['label'] ?? '' ) );
-$tree  = array();
-foreach ( builderlab_lines( $attributes['items'] ?? '' ) as $line ) {
+$tree  = builderlab_nav_tree( $attributes['menu'] ?? '' ); // A menu made in WordPress, when one is chosen.
+foreach ( $tree ? array() : builderlab_lines( $attributes['items'] ?? '' ) as $line ) {
 	$child = ( 0 === strpos( $line, '- ' ) );
 	$line  = $child ? substr( $line, 2 ) : $line;
 	$parts = array_map( 'trim', explode( '|', $line, 2 ) );

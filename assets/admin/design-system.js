@@ -165,7 +165,7 @@
 			{ className: 'bl-ds-field' + ( wide ? ' is-wide' : '' ) },
 			h( 'label', { htmlFor: id }, label ),
 			h( 'input', { id, type: type || 'text', value: value === undefined || value === null ? '' : value, onChange: ( e ) => onChange( e.target.value ), 'aria-describedby': describedBy, 'aria-invalid': state === 'bad' ? 'true' : undefined } ),
-			help && h( 'p', { id: id + '-help', className: 'description' }, help ),
+			help && h( 'p', { id: id + '-help', className: 'bl-desc' }, help ),
 			hint && h( 'p', { id: id + '-hint', className: 'bl-ds-hint ' + ( state === 'bad' ? 'is-bad' : 'is-note' ) }, hint )
 		);
 	}
@@ -189,7 +189,7 @@
 			h(
 				Group,
 				{ title: 'Palette (raw colors)' },
-				h( 'p', { className: 'description' }, 'Name your brand colors here. Roles below decide what each color is used for.' ),
+				h( 'p', { className: 'bl-desc' }, 'Name your brand colors here. Roles below decide what each color is used for.' ),
 				h(
 					'ul',
 					{ className: 'bl-ds-palette' },
@@ -200,7 +200,7 @@
 							h( 'span', { className: 'bl-ds-palette__name' }, name ),
 							h( 'input', { type: 'color', 'aria-label': name + ' color picker', value: isHex( palette[ name ] ) ? palette[ name ] : '#000000', onChange: ( e ) => setSys( setIn( sys, [ 'palette', name ], e.target.value ) ) } ),
 							h( 'input', { type: 'text', 'aria-label': name + ' hex value', className: 'bl-ds-hex', value: palette[ name ], onChange: ( e ) => setSys( setIn( sys, [ 'palette', name ], e.target.value ) ) } ),
-							h( 'button', { type: 'button', className: 'button', disabled: !! used[ name ], title: used[ name ] ? 'In use by a role' : '', onClick: () => { const p = Object.assign( {}, palette ); delete p[ name ]; setSys( setIn( sys, [ 'palette' ], p ) ); } }, 'Remove ' + name )
+							h( 'button', { type: 'button', className: 'blb', disabled: !! used[ name ], title: used[ name ] ? 'In use by a role' : '', onClick: () => { const p = Object.assign( {}, palette ); delete p[ name ]; setSys( setIn( sys, [ 'palette' ], p ) ); } }, 'Remove ' + name )
 						)
 					)
 				),
@@ -208,7 +208,7 @@
 					'div',
 					{ className: 'bl-ds-add' },
 					h( Field, { label: 'New color name', value: newName, onChange: setNewName, help: 'Lowercase letters, numbers and hyphens.' } ),
-					h( 'button', { type: 'button', className: 'button', disabled: ! /^[a-z0-9-]+$/.test( newName ) || palette[ newName ], onClick: () => { setSys( setIn( sys, [ 'palette', newName ], '#808080' ) ); setNewName( '' ); } }, 'Add color' )
+					h( 'button', { type: 'button', className: 'blb', disabled: ! /^[a-z0-9-]+$/.test( newName ) || palette[ newName ], onClick: () => { setSys( setIn( sys, [ 'palette', newName ], '#808080' ) ); setNewName( '' ); } }, 'Add color' )
 				)
 			),
 			h(
@@ -249,7 +249,7 @@
 				custom && h( 'option', { value }, 'Custom ' + value ),
 				names.map( ( n ) => h( 'option', { key: n, value: n }, n + ' ' + palette[ n ] ) )
 			),
-			h( 'p', { id: id + '-help', className: 'description' }, help[ 1 ] )
+			h( 'p', { id: id + '-help', className: 'bl-desc' }, help[ 1 ] )
 		);
 	}
 
@@ -303,7 +303,7 @@
 		return h(
 			Fragment,
 			null,
-			h( 'p', { className: 'description' }, 'Style each block type once. Colors are roles from your palette, so a rebrand reaches every block. Empty size fields follow the global tokens.' ),
+			h( 'p', { className: 'bl-desc' }, 'Style each block type once. Colors are roles from your palette, so a rebrand reaches every block. Empty size fields follow the global tokens.' ),
 			Object.keys( schema ).map( ( comp ) => {
 				const props = schema[ comp ].props;
 				const values = ( sys.components || {} )[ comp ] || {};
@@ -359,7 +359,7 @@
 		return h(
 			Group,
 			{ title: 'Your own variables' },
-			h( 'p', { className: 'description' }, 'Each variable becomes the CSS custom property --bl-var-name and can be used anywhere.' ),
+			h( 'p', { className: 'bl-desc' }, 'Each variable becomes the CSS custom property --bl-var-name and can be used anywhere.' ),
 			vars.map( ( x, i ) =>
 				h(
 					'div',
@@ -367,10 +367,10 @@
 					h( Field, { label: 'Name', value: x.name, onChange: ( v ) => upd( i, 'name', v ), help: 'Lowercase letters, numbers and hyphens.' } ),
 					h( VarType, { value: x.type, onChange: ( v ) => upd( i, 'type', v ) } ),
 					h( Field, { label: 'Value', value: x.value, onChange: ( v ) => upd( i, 'value', v ) } ),
-					h( 'button', { type: 'button', className: 'button', onClick: () => setSys( setIn( sys, [ 'variables' ], vars.filter( ( _, n ) => n !== i ) ) ) }, 'Remove variable ' + ( i + 1 ) )
+					h( 'button', { type: 'button', className: 'blb', onClick: () => setSys( setIn( sys, [ 'variables' ], vars.filter( ( _, n ) => n !== i ) ) ) }, 'Remove variable ' + ( i + 1 ) )
 				)
 			),
-			h( 'button', { type: 'button', className: 'button button-secondary', onClick: () => setSys( setIn( sys, [ 'variables' ], vars.concat( [ { name: '', type: 'size', value: '' } ] ) ) ) }, 'Add variable' )
+			h( 'button', { type: 'button', className: 'blb', onClick: () => setSys( setIn( sys, [ 'variables' ], vars.concat( [ { name: '', type: 'size', value: '' } ] ) ) ) }, 'Add variable' )
 		);
 	}
 	function VarType( { value, onChange } ) {
@@ -385,8 +385,8 @@
 			Group,
 			{ title: 'Contrast matrix' },
 			h( 'p', { role: 'status' }, fails ? `${ fails } of ${ rows.length } pairs are below the WCAG 2.2 AA ratio. This is a warning only: you can still save.` : `All ${ rows.length } pairs meet the WCAG 2.2 AA ratio.` ),
-			h( 'table', { className: 'widefat striped bl-ds-matrix' },
-				h( 'caption', { className: 'screen-reader-text' }, 'Color pairs and their contrast ratios' ),
+			h( 'table', { className: 'bl-ds-matrix' },
+				h( 'caption', { className: 'bl-sr' }, 'Color pairs and their contrast ratios' ),
 				h( 'thead', null, h( 'tr', null, [ 'Text or UI', 'On', 'Used for', 'Ratio', 'Needed', 'Result' ].map( ( t ) => h( 'th', { key: t, scope: 'col' }, t ) ) ) ),
 				h( 'tbody', null, rows.map( ( r, i ) =>
 					h( 'tr', { key: i },
@@ -431,25 +431,25 @@
 			null,
 			h( Group, { title: 'Brand' }, h( Field, { label: 'Brand name', value: sys.brand.name, onChange: ( v ) => setSys( setIn( sys, [ 'brand', 'name' ], v ) ) } ) ),
 			h( Group, { title: 'Export and import' },
-				h( 'button', { type: 'button', className: 'button', onClick: doExport }, 'Export design system (JSON file)' ),
+				h( 'button', { type: 'button', className: 'blb', onClick: doExport }, 'Export design system (JSON file)' ),
 				h( 'div', { className: 'bl-ds-field is-wide' },
 					h( 'label', { htmlFor: 'bl-ds-import' }, 'Paste JSON to import' ),
 					h( 'textarea', { id: 'bl-ds-import', rows: 6, value: text, onChange: ( e ) => setText( e.target.value ) } ) ),
-				h( 'button', { type: 'button', className: 'button', disabled: ! text.trim(), onClick: () => load( text ) }, 'Load pasted JSON into the editor' ),
+				h( 'button', { type: 'button', className: 'blb', disabled: ! text.trim(), onClick: () => load( text ) }, 'Load pasted JSON into the editor' ),
 				h( 'div', { className: 'bl-ds-field' },
 					h( 'label', { htmlFor: 'bl-ds-file' }, 'Or choose a JSON file' ),
 					h( 'input', { id: 'bl-ds-file', type: 'file', accept: 'application/json,.json', ref: fileRef, onChange: ( e ) => { const f = e.target.files[ 0 ]; if ( f ) { f.text().then( load ); } } } ) ),
 				err && h( 'p', { role: 'alert', className: 'bl-ds-error' }, err ),
-				h( 'p', { className: 'description' }, 'Imported values are loaded into the editor as unsaved changes. Check the preview, then save.' ) ),
+				h( 'p', { className: 'bl-desc' }, 'Imported values are loaded into the editor as unsaved changes. Check the preview, then save.' ) ),
 			h( Group, { title: 'Defaults' },
-				h( 'button', { type: 'button', className: 'button', onClick: () => setSys( JSON.parse( JSON.stringify( meta.defaults ) ) ) }, 'Load the default design system into the editor' ) ),
+				h( 'button', { type: 'button', className: 'blb', onClick: () => setSys( JSON.parse( JSON.stringify( meta.defaults ) ) ) }, 'Load the default design system into the editor' ) ),
 			h( Group, { title: 'Revisions' },
 				( meta.revisions || [] ).length === 0
 					? h( 'p', null, 'No revisions yet. A revision is stored each time you save.' )
 					: h( 'ul', { className: 'bl-ds-revs' }, meta.revisions.map( ( r ) =>
 						h( 'li', { key: r.index },
 							h( 'span', null, `${ r.time } by ${ r.user }${ r.brand ? ', brand "' + r.brand + '"' : '' }${ r.note ? ': ' + r.note : '' }` ),
-							h( 'button', { type: 'button', className: 'button', disabled: busy, onClick: () => restore( r.index ) }, `Restore revision from ${ r.time }` ) ) ) ) )
+							h( 'button', { type: 'button', className: 'blb', disabled: busy, onClick: () => restore( r.index ) }, `Restore revision from ${ r.time }` ) ) ) ) )
 		);
 	}
 
@@ -471,6 +471,8 @@
 		const [ adjusted, setAdjusted ] = useState( [] );
 		const [ busy, setBusy ] = useState( false );
 		const [ view, setView ] = useState( 'full' );
+		const [ theme, setTheme ] = useState( () => { try { return window.localStorage.getItem( 'builderlabTheme' ) || 'dark'; } catch ( e ) { return 'dark'; } } );
+		useEffect( () => { try { window.localStorage.setItem( 'builderlabTheme', theme ); } catch ( e ) { /* storage may be blocked */ } }, [ theme ] );
 		const [ frameTick, setFrameTick ] = useState( 0 );
 		const [ loadError, setLoadError ] = useState( '' );
 		const frame = useRef( null );
@@ -526,7 +528,7 @@
 		const rows = useMemo( () => ( sys ? contrastRows( sys, meta.pairs, meta.schema ) : [] ), [ sys, meta.pairs, meta.schema ] );
 
 		if ( loadError ) {
-			return h( 'div', { className: 'notice notice-error', role: 'alert' }, h( 'p', null, loadError ) );
+			return h( 'div', { className: 'bl-note is-error', role: 'alert' }, h( 'p', null, loadError ) );
 		}
 		if ( ! sys ) {
 			return h( 'p', null, 'Loading the design system…' );
@@ -580,14 +582,16 @@
 
 		return h(
 			'div',
-			{ className: 'bl-ds' },
+			{ className: 'bl-ds', 'data-theme': theme },
 			h(
 				'nav',
 				{ className: 'bl-ds-nav', 'aria-label': 'Design system sections' },
-				h( 'p', { className: 'bl-ds-brand' }, 'Brand: ', h( 'strong', null, sys.brand.name ) ),
+				h( 'div', { className: 'bl-ds-title' }, h( 'span', { className: 'bl-ds-kicker' }, 'BuilderLab' ), h( 'span', { className: 'bl-ds-h' }, 'Design system' ) ),
+				h( 'p', { className: 'bl-ds-brand' }, 'Brand', h( 'strong', null, sys.brand.name ) ),
 				h( 'ul', null, SECTIONS.map( ( s ) =>
 					h( 'li', { key: s[ 0 ] }, h( 'button', { type: 'button', className: 'bl-ds-nav__btn', 'aria-current': s[ 0 ] === section ? 'page' : undefined, onClick: () => setSection( s[ 0 ] ) },
-						s[ 1 ], s[ 0 ] === 'contrast' && failing > 0 ? h( 'span', { className: 'bl-ds-count' }, ` (${ failing } fail)` ) : null ) ) ) )
+						s[ 1 ], s[ 0 ] === 'contrast' && failing > 0 ? h( 'span', { className: 'bl-ds-count' }, ` (${ failing } fail)` ) : null ) ) ) ),
+				h( 'button', { type: 'button', className: 'blb bl-ds-theme', onClick: () => setTheme( theme === 'dark' ? 'light' : 'dark' ) }, theme === 'dark' ? 'Switch to the light theme' : 'Switch to the dark theme' )
 			),
 			h(
 				'section',
@@ -596,7 +600,7 @@
 					h( 'strong', null, 'Live style guide' ),
 					h( 'div', { role: 'group', 'aria-label': 'Preview width' },
 						[ [ 'mobile', '320 px' ], [ 'tablet', '768 px' ], [ 'full', 'Full width' ] ].map( ( v ) =>
-							h( 'button', { key: v[ 0 ], type: 'button', className: 'button', 'aria-pressed': view === v[ 0 ], onClick: () => setView( v[ 0 ] ) }, v[ 1 ] ) ) ) ),
+							h( 'button', { key: v[ 0 ], type: 'button', className: 'blb', 'aria-pressed': view === v[ 0 ], onClick: () => setView( v[ 0 ] ) }, v[ 1 ] ) ) ) ),
 				h( 'div', { className: 'bl-ds-guide__stage' },
 					h( 'iframe', { ref: frame, src: cfg.guideUrl, title: 'Live style guide: a sample page built with BuilderLab blocks', className: 'bl-ds-frame is-' + view, onLoad: () => setFrameTick( ( n ) => n + 1 ) } ) )
 			),
@@ -604,11 +608,11 @@
 				'section',
 				{ className: 'bl-ds-panel', 'aria-labelledby': 'bl-ds-title' },
 				h( 'div', { className: 'bl-ds-savebar' },
-					h( 'button', { type: 'button', className: 'button button-primary', disabled: busy || ! dirty, onClick: save }, 'Save changes' ),
+					h( 'button', { type: 'button', className: 'blb blb-primary', disabled: busy || ! dirty, onClick: save }, 'Save changes' ),
 					h( 'span', { className: 'bl-ds-dirty' }, dirty ? 'Unsaved changes' : 'All changes saved' ) ),
-				h( 'div', { role: 'status', 'aria-live': 'polite', className: 'bl-ds-msg' + ( msg ? ' notice inline notice-' + msgKind : '' ) }, msg ? h( 'p', null, msg ) : null ),
-				adjusted.length > 0 && h( 'div', { className: 'notice notice-info inline' }, h( 'p', null, h( 'strong', null, 'The server adjusted these values' ) ), h( 'ul', null, adjusted.map( ( a, i ) => h( 'li', { key: i }, a ) ) ) ),
-				warnings.length > 0 && h( 'div', { className: 'notice notice-warning inline' }, h( 'p', null, h( 'strong', null, 'Warnings from the last save' ) ), h( 'ul', null, warnings.map( ( w, i ) => h( 'li', { key: i }, w ) ) ) ),
+				h( 'div', { role: 'status', 'aria-live': 'polite', className: 'bl-ds-msg' + ( msg ? ' bl-note is-' + msgKind : '' ) }, msg ? h( 'p', null, msg ) : null ),
+				adjusted.length > 0 && h( 'div', { className: 'bl-note is-info' }, h( 'p', null, h( 'strong', null, 'The server adjusted these values' ) ), h( 'ul', null, adjusted.map( ( a, i ) => h( 'li', { key: i }, a ) ) ) ),
+				warnings.length > 0 && h( 'div', { className: 'bl-note is-warning' }, h( 'p', null, h( 'strong', null, 'Warnings from the last save' ) ), h( 'ul', null, warnings.map( ( w, i ) => h( 'li', { key: i }, w ) ) ) ),
 				h( 'h2', { id: 'bl-ds-title' }, title ),
 				body
 			)

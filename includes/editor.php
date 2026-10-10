@@ -215,7 +215,7 @@ function builderlab_editor_payload( WP_Post $post ) {
 		'components' => $components,
 		'layout'   => $is_template ? '' : builderlab_post_layout( $post->ID ),
 		'layouts'  => builderlab_layout_modes(),
-		'previewUrl' => $is_template ? '' : add_query_arg( 'bl_edit', '1', get_preview_post_link( $post ) ),
+		'previewUrl' => $is_template ? '' : add_query_arg( array( 'p' => $post->ID, 'post_type' => $post->post_type, 'bl_edit' => '1' ), home_url( '/' ) ),
 		'post'    => array(
 			'id'       => $post->ID,
 			'title'    => 'auto-draft' === $post->post_status ? $suggested : get_the_title( $post ),
@@ -223,7 +223,7 @@ function builderlab_editor_payload( WP_Post $post ) {
 			'type'     => $post->post_type,
 			'typeName' => $type ? $type->labels->singular_name : $post->post_type,
 			'typePlural' => $type ? $type->labels->name : $post->post_type,
-			'link'     => 'publish' === $post->post_status ? get_permalink( $post ) : get_preview_post_link( $post ),
+			'link'     => 'publish' === $post->post_status ? get_permalink( $post ) : add_query_arg( array( 'p' => $post->ID, 'post_type' => $post->post_type, 'preview' => 'true' ), home_url( '/' ) ),
 			'editUrl'  => get_edit_post_link( $post->ID, 'raw' ),
 			'modified' => $post->post_modified_gmt,
 			'canPublish' => current_user_can( 'publish_post', $post->ID ),
@@ -341,7 +341,7 @@ add_action( 'rest_api_init', function () {
 			$html                                = do_blocks( serialize_blocks( builderlab_tree_to_blocks( $tree, true ) ) );
 			$GLOBALS['builderlab_editor_render'] = false;
 			wp_reset_postdata();
-			return array( 'html' => $html );
+			return array( 'html' => $html . builderlab_custom_css_flush() );
 		},
 	) );
 } );

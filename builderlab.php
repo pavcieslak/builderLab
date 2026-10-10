@@ -2,7 +2,7 @@
 /**
  * Plugin Name: BuilderLab
  * Description: Lean, accessibility-first building blocks with a built-in WCAG 2.2 AA checker. Spike version.
- * Version: 0.12.0
+ * Version: 0.13.0
  * Requires at least: 6.5
  * Requires PHP: 7.4
  * License: GPL-2.0-or-later
@@ -11,7 +11,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'BUILDERLAB_VERSION', '0.12.0' );
+define( 'BUILDERLAB_VERSION', '0.14.0' );
 define( 'BUILDERLAB_DIR', plugin_dir_path( __FILE__ ) );
 define( 'BUILDERLAB_URL', plugin_dir_url( __FILE__ ) );
 
@@ -25,13 +25,16 @@ require_once BUILDERLAB_DIR . 'includes/templates.php';
 require_once BUILDERLAB_DIR . 'includes/layout-mode.php';
 require_once BUILDERLAB_DIR . 'includes/settings.php';
 require_once BUILDERLAB_DIR . 'includes/editor.php';
+require_once BUILDERLAB_DIR . 'includes/loop.php';
+require_once BUILDERLAB_DIR . 'includes/custom-css.php';
+require_once BUILDERLAB_DIR . 'includes/nav-source.php';
 
 /** Every block, in the order shown in the inserter. */
 function builderlab_block_names() {
 	return array(
 		'container', 'heading', 'text', 'button', 'image',
 		'list', 'divider', 'quote', 'table', 'alert', 'html',
-		'accordion', 'tabs', 'nav', 'breadcrumbs', 'search', 'form', 'template',
+		'accordion', 'tabs', 'nav', 'breadcrumbs', 'search', 'form', 'loop', 'template',
 	);
 }
 
@@ -41,6 +44,7 @@ add_action( 'init', function () {
 	wp_register_style( 'builderlab-frontend', BUILDERLAB_URL . 'assets/frontend.css', array( 'builderlab-tokens' ), BUILDERLAB_VERSION );
 	wp_register_style( 'builderlab-editor', BUILDERLAB_URL . 'assets/editor.css', array(), BUILDERLAB_VERSION );
 	wp_register_script( 'builderlab-tabs', BUILDERLAB_URL . 'assets/tabs.js', array(), BUILDERLAB_VERSION, array( 'strategy' => 'defer', 'in_footer' => true ) );
+	wp_register_script( 'builderlab-loop', BUILDERLAB_URL . 'assets/loop.js', array(), BUILDERLAB_VERSION, array( 'strategy' => 'defer', 'in_footer' => true ) );
 	wp_register_script( 'builderlab-nav', BUILDERLAB_URL . 'assets/nav.js', array(), BUILDERLAB_VERSION, array( 'strategy' => 'defer', 'in_footer' => true ) );
 
 	// Editor: shared helpers, then block screens, then the checker.

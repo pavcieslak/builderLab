@@ -15,7 +15,7 @@ function builderlab_render_admin_page() {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		return;
 	}
-	echo '<div class="wrap builderlab-ds-wrap"><h1 class="wp-heading-inline">BuilderLab design system</h1><hr class="wp-header-end">';
+	echo '<div class="wrap builderlab-ds-wrap"><h1 class="screen-reader-text">BuilderLab design system</h1>';
 	echo '<div id="builderlab-ds-root"><p>Loading the design system…</p></div>';
 	echo '<noscript><p>This screen needs JavaScript. The design system can also be managed with WP-CLI: <code>wp builderlab ds</code>.</p></noscript></div>';
 }
